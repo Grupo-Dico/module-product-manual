@@ -131,9 +131,8 @@ if ($manualValue !== '') {
         <a
             class="product-assembly-manual__link"
             href="<?= $escaper->escapeUrl($manualUrl) ?>"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="<?= $escaper->escapeHtmlAttr(__('Abrir Manual de armado')) ?>"
+            download="<?= $escaper->escapeHtmlAttr($manualFilename) ?>"
+            title="<?= $escaper->escapeHtmlAttr(__('Descargar Manual de armado')) ?>"
         >
             <span
                 class="product-assembly-manual__icon"
