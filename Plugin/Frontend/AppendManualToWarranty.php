@@ -1,4 +1,9 @@
 <?php
+/**
+ * @author GDMexico
+ * @package GDMexico_ProductManual
+ */
+
 declare(strict_types=1);
 
 namespace GDMexico\ProductManual\Plugin\Frontend;
@@ -7,67 +12,143 @@ use GDMexico\ProductManual\Setup\Patch\Data\AddAssemblyManualAttribute;
 use Magento\Catalog\Block\Product\View;
 use Magento\Framework\Escaper;
 use Magento\Framework\UrlInterface;
-use Magento\Store\Model\StoreManagerInterface;
 
 class AppendManualToWarranty
 {
+    /**
+     * Nombre en layout del bloque de cuidados y garantías.
+     */
     private const TARGET_BLOCK = 'product.custom.warranty';
 
-    /** @var StoreManagerInterface */
-    private $storeManager;
+    /**
+     * Clase CSS del enlace del manual.
+     */
+    private const MANUAL_LINK_CLASS = 'product-assembly-manual__link';
 
-    /** @var Escaper */
+    /**
+     * @var Escaper
+     */
     private $escaper;
 
+    /**
+     * @var UrlInterface
+     */
+    private $urlBuilder;
+
+    /**
+     * @param Escaper $escaper
+     * @param UrlInterface $urlBuilder
+     */
     public function __construct(
-        StoreManagerInterface $storeManager,
-        Escaper $escaper
+        Escaper $escaper,
+        UrlInterface $urlBuilder
     ) {
-        $this->storeManager = $storeManager;
         $this->escaper = $escaper;
+        $this->urlBuilder = $urlBuilder;
     }
 
+    /**
+     * Cambia el título del acordeón únicamente cuando el producto
+     * tiene un manual de armado.
+     *
+     * @param View $subject
+     * @return void
+     */
     public function beforeToHtml(View $subject): void
     {
         if ($subject->getNameInLayout() !== self::TARGET_BLOCK) {
             return;
         }
 
-        $subject->setData('title', (string)__('Cuidados, garantías y manuales'));
+        $product = $subject->getProduct();
+
+        if (!$product) {
+            return;
+        }
+
+        $manualValue = trim(
+            (string) $product->getData(
+                AddAssemblyManualAttribute::ATTRIBUTE_CODE
+            )
+        );
+
+        if ($manualValue === '') {
+            return;
+        }
+
+        $subject->setData(
+            'title',
+            (string) __('Cuidados, garantías y manuales')
+        );
     }
 
-    public function afterToHtml(View $subject, string $result): string
-    {
+    /**
+     * Agrega el enlace de descarga del manual al final del bloque.
+     *
+     * @param View $subject
+     * @param string $result
+     * @return string
+     */
+    public function afterToHtml(
+        View $subject,
+        string $result
+    ): string {
         if ($subject->getNameInLayout() !== self::TARGET_BLOCK) {
             return $result;
         }
 
+        /*
+         * Evita agregar el manual más de una vez.
+         */
+        if (strpos($result, self::MANUAL_LINK_CLASS) !== false) {
+            return $result;
+        }
+
         $product = $subject->getProduct();
+
         if (!$product) {
             return $result;
         }
 
-        $value = trim((string)$product->getData(AddAssemblyManualAttribute::ATTRIBUTE_CODE));
-        if ($value === '') {
+        $productId = (int) $product->getId();
+
+        $manualValue = trim(
+            (string) $product->getData(
+                AddAssemblyManualAttribute::ATTRIBUTE_CODE
+            )
+        );
+
+        if ($manualValue === '' || $productId <= 0) {
             return $result;
         }
 
-        $url = preg_match('#^https?://#i', $value)
-            ? $value
-            : rtrim(
-                $this->storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_MEDIA),
-                '/'
-            ) . '/' . ltrim($value, '/');
+        /*
+         * Apunta al controller que fuerza la descarga.
+         * No utiliza directamente la URL de pub/media.
+         */
+        $downloadUrl = $this->urlBuilder->getUrl(
+            'productmanual/manual/download',
+            [
+                'id' => $productId,
+                '_secure' => $subject->getRequest()->isSecure()
+            ]
+        );
 
         $manualHtml = sprintf(
             '<div class="product-assembly-manual info-section">'
-            . '<a class="product-assembly-manual__link" href="%s" target="_blank" rel="noopener noreferrer">'
-            . '<span class="product-assembly-manual__icon" aria-hidden="true">&#128196;</span>'
-            . '<span>%s</span>'
+            . '<a class="%s" href="%s" title="%s">'
+            . '<span class="product-assembly-manual__icon" aria-hidden="true"></span>'
+            . '<span class="product-assembly-manual__label">%s</span>'
             . '</a>'
             . '</div>',
-            $this->escaper->escapeUrl($url),
-            $this->escaper->escapeHtml((string)__('Manual de armado'))
+            self::MANUAL_LINK_CLASS,
+            $this->escaper->escapeUrl($downloadUrl),
+            $this->escaper->escapeHtmlAttr(
+                (string) __('Descargar Manual de armado')
+            ),
+            $this->escaper->escapeHtml(
+                (string) __('Manual de armado')
+            )
         );
 
         return $result . $manualHtml;

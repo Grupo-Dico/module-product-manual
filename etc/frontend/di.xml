@@ -1,9 +1,14 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
     <type name="Magento\Catalog\Block\Product\View">
-        <plugin name="gdmexico_product_manual_append_to_warranty"
-                type="GDMexico\ProductManual\Plugin\Frontend\AppendManualToWarranty"
-                sortOrder="100"/>
+        <plugin
+            name="gdmexico_product_manual_append_to_warranty"
+            type="GDMexico\ProductManual\Plugin\Frontend\AppendManualToWarranty"
+            sortOrder="100"
+            disabled="false"
+        />
     </type>
+
 </config>
