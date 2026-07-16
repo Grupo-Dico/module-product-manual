@@ -7,32 +7,23 @@
             name="assembly_manual"
             sortOrder="250"
             formElement="fileUploader"
+            component="GDMexico_ProductManual/js/form/element/manual-uploader"
         >
             <settings>
                 <dataType>string</dataType>
-                <label translate="true">
-                    Manual de armado
-                </label>
+                <label translate="true">Manual de armado</label>
                 <notice translate="true">
                     Solo archivos PDF. Tamaño máximo: 10 MB.
                 </notice>
                 <dataScope>assembly_manual</dataScope>
-                <component>
-                    GDMexico_ProductManual/js/form/element/manual-uploader
-                </component>
                 <visible>true</visible>
             </settings>
 
             <formElements>
                 <fileUploader>
                     <settings>
-                        <allowedExtensions>
-                            pdf
-                        </allowedExtensions>
-
-                        <maxFileSize>
-                            10485760
-                        </maxFileSize>
+                        <allowedExtensions>pdf</allowedExtensions>
+                        <maxFileSize>10485760</maxFileSize>
 
                         <uploaderConfig>
                             <param
@@ -51,13 +42,16 @@
             sortOrder="251"
             formElement="hidden"
         >
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="value" xsi:type="number">0</item>
+                </item>
+            </argument>
+
             <settings>
                 <dataType>number</dataType>
-                <dataScope>
-                    assembly_manual_delete
-                </dataScope>
+                <dataScope>assembly_manual_delete</dataScope>
                 <visible>false</visible>
-                <default>0</default>
             </settings>
         </field>
 
@@ -68,9 +62,7 @@
         >
             <settings>
                 <dataType>string</dataType>
-                <dataScope>
-                    assembly_manual_original
-                </dataScope>
+                <dataScope>assembly_manual_original</dataScope>
                 <visible>false</visible>
             </settings>
         </field>
