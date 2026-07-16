@@ -14,25 +14,19 @@ use Magento\Ui\DataProvider\Modifier\ModifierInterface;
 class ManualData implements ModifierInterface
 {
     private const ATTRIBUTE_CODE = 'assembly_manual';
+    private const DELETE_FIELD = 'assembly_manual_delete';
+    private const ORIGINAL_FIELD = 'assembly_manual_original';
 
-    /**
-     * @var RequestInterface
-     */
+    /** @var RequestInterface */
     private $request;
 
-    /**
-     * @var ProductRepositoryInterface
-     */
+    /** @var ProductRepositoryInterface */
     private $productRepository;
 
-    /**
-     * @var StoreManagerInterface
-     */
+    /** @var StoreManagerInterface */
     private $storeManager;
 
-    /**
-     * @var Filesystem
-     */
+    /** @var Filesystem */
     private $filesystem;
 
     public function __construct(
@@ -47,19 +41,11 @@ class ManualData implements ModifierInterface
         $this->filesystem = $filesystem;
     }
 
-    /**
-     * @param array $meta
-     * @return array
-     */
     public function modifyMeta(array $meta): array
     {
         return $meta;
     }
 
-    /**
-     * @param array $data
-     * @return array
-     */
     public function modifyData(array $data): array
     {
         $productId = (int) $this->request->getParam('id');
@@ -117,21 +103,21 @@ class ManualData implements ModifierInterface
                 ]
             ];
 
-            /*
-             * Magento 2.4.2 normalmente utiliza esta estructura.
-             */
             if (!isset($data[$productId])) {
                 $data[$productId] = [];
             }
 
             if (
-                isset($data[$productId]['product']) &&
-                is_array($data[$productId]['product'])
+                isset($data[$productId]['product'])
+                && is_array($data[$productId]['product'])
             ) {
-                $data[$productId]['product'][self::ATTRIBUTE_CODE]
-                    = $uploaderValue;
+                $data[$productId]['product'][self::ATTRIBUTE_CODE] = $uploaderValue;
+                $data[$productId]['product'][self::ORIGINAL_FIELD] = $file;
+                $data[$productId]['product'][self::DELETE_FIELD] = 0;
             } else {
                 $data[$productId][self::ATTRIBUTE_CODE] = $uploaderValue;
+                $data[$productId][self::ORIGINAL_FIELD] = $file;
+                $data[$productId][self::DELETE_FIELD] = 0;
             }
         } catch (\Exception $exception) {
             return $data;
@@ -140,10 +126,6 @@ class ManualData implements ModifierInterface
         return $data;
     }
 
-    /**
-     * @param string $value
-     * @return string
-     */
     private function normalizePath(string $value): string
     {
         $value = trim(str_replace('\\', '/', $value));
